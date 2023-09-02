@@ -338,6 +338,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0972b8deca2fb3468bac2839a866e32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pSeed: 4294967295
+  pContextSize: 512
+  pBatchSize: 512
+  pUseMemoryMapping: 1
+  pUseMemoryLocking: 1
+  pGpuLayers: 24
+  pRopeFrequencyBase: 10000
+  pRopeFrequencyScale: 1
+  pLowVRAM: 0
+  pThreadCount: 8
+  pTopK: 40
+  pTopP: 0.95
+  pTemperature: 0.8
+  pRepeatPenalty: 1.3
+  pLastTokenCountPenalty: 64
+  pPenalizeNewLine: 1
+  pTfsZ: 1
+  pTypicalP: 1
+  pFrequencyPenalty: 0
+  pPresencePenalty: 0
+  pMirostat: 2
+  pMirostatTAU: 5
+  pMirostatETA: 0.1
+  pModelName: 13q4.gguf
 --- !u!4 &1563233268
 Transform:
   m_ObjectHideFlags: 0

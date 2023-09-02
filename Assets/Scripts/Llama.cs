@@ -7,6 +7,7 @@ using Debug = UnityEngine.Debug;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
 namespace DefaultNamespace
 {
     
@@ -16,22 +17,15 @@ namespace DefaultNamespace
         private LlamaCppModel _model;
         private LlamaCppGenerateOptions _generateOptions;
         private LlamaCppModelOptions _modelOptions;
-        private string _modelPath = Application.streamingAssetsPath + "/codellama-13b-instruct.Q4_K_M.gguf";
+        private string _modelPath;
         private string _message;
- 
-        private LlamaService()
+
+        public void LoadModel(in LlamaCppModelOptions modelOptions, in LlamaCppGenerateOptions generateOptions,in string modelPath)
         {
-            #if UNITY_EDITOR
-                EditorApplication.playModeStateChanged += LastResults;
-            #endif
-            
             var stopwatch = new Stopwatch();
-            // Configure some model options
-            _modelOptions = new LlamaCppModelOptions
-            {
-                ContextSize = 2048, 
-                GpuLayers = 24,
-            };
+            _generateOptions = generateOptions;
+            _modelOptions = modelOptions;
+            _modelPath = Application.streamingAssetsPath + "/" + modelPath;
             
             // Load model file
             _model = new LlamaCppModel();
@@ -40,18 +34,13 @@ namespace DefaultNamespace
             stopwatch.Stop();
             Debug.Log($"model.Load(...) took {stopwatch.ElapsedMilliseconds} ms to execute.");
             stopwatch.Reset();
+        }
         
-            // Configure some prediction options
-            _generateOptions = new LlamaCppGenerateOptions
-            {
-                ThreadCount = 10,
-                TopK = 1,
-                TopP = 0.95f,
-                Temperature = 0.1f,
-                RepeatPenalty = 1.3f,
-                PenalizeNewLine = true,
-                Mirostat = Mirostat.Mirostat2,
-            };
+        private LlamaService()
+        {
+            #if UNITY_EDITOR
+                EditorApplication.playModeStateChanged += LastResults;
+            #endif
         }
         
         #if UNITY_EDITOR
@@ -98,6 +87,8 @@ namespace DefaultNamespace
             Debug.Log(_message);
             return _message;
         }
+        
+      
     }
 
 

@@ -3,25 +3,87 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DefaultNamespace;
 using Debug = UnityEngine.Debug;
+using LlamaCppLib;
 
 public class LlamaCppTest : MonoBehaviour
 {
+    // Model Options
+    [SerializeField] public uint pSeed  = uint.MaxValue;
+    [SerializeField] public int pContextSize = 512;
+    [SerializeField] public int pBatchSize = 512;
+    [SerializeField] public bool pUseMemoryMapping = true;
+    [SerializeField] public bool pUseMemoryLocking;
+    [SerializeField] public int pGpuLayers = 24;
+    [SerializeField] public float pRopeFrequencyBase = 10000f;
+    [SerializeField] public float pRopeFrequencyScale = 1f;
+    [SerializeField] public bool pLowVRAM; 
+
+    // Generate Options
+    [SerializeField] public int pThreadCount = 4;
+    [SerializeField] public int pTopK = 40;
+    [SerializeField] public float pTopP = 0.95f;
+    [SerializeField] public float pTemperature = 0.8f;
+    [SerializeField] public float pRepeatPenalty = 1.1f;
+    [SerializeField] public int pLastTokenCountPenalty = 64;
+    [SerializeField] public bool pPenalizeNewLine; 
+    [SerializeField] public float pTfsZ = 1f;
+    [SerializeField] public float pTypicalP = 1f;
+    [SerializeField] public float pFrequencyPenalty;
+    [SerializeField] public float pPresencePenalty;
+    [SerializeField] public Mirostat pMirostat = Mirostat.Mirostat2;
+    [SerializeField] public float pMirostatTAU = 5f;
+    [SerializeField] public float pMirostatETA = 0.1f;
     
+    // Model Path
+    [SerializeField] public string pModelName = "13q4.gguf";
+    
+    // Prompt
+    public string pTestPrompt = "Will we get into SAGE 2023?";
     private static LlamaService llamaInstance;
-    private bool promptHasRun = false;
-    private string TestPrompt = "Are you still there?";
+    private bool _promptHasRun = false;
     void Start()
     {
+        var modelOptions = new LlamaCppModelOptions 
+        {
+            Seed = pSeed,
+            ContextSize = pContextSize,
+            BatchSize = pBatchSize,
+            UseMemoryMapping = pUseMemoryMapping,
+            UseMemoryLocking = pUseMemoryLocking,
+            GpuLayers = pGpuLayers,
+            RopeFrequencyBase = pRopeFrequencyBase,
+            RopeFrequencyScale = pRopeFrequencyScale,
+            LowVRAM = pLowVRAM,
+        };
+
+        var generateOptions = new LlamaCppGenerateOptions
+        {
+            ThreadCount = pThreadCount,
+            TopK = pTopK,
+            TopP = pTopP,
+            Temperature = pTemperature,
+            RepeatPenalty = pRepeatPenalty,
+            LastTokenCountPenalty = pLastTokenCountPenalty,
+            PenalizeNewLine = pPenalizeNewLine,
+            TfsZ = pTfsZ,
+            TypicalP = pTypicalP,
+            FrequencyPenalty = pFrequencyPenalty,
+            PresencePenalty = pPresencePenalty,
+            Mirostat = pMirostat,
+            MirostatTAU = pMirostatTAU,
+            MirostatETA = pMirostatETA,
+        };
+
         llamaInstance = LlamaService.Instance;
+        llamaInstance.LoadModel(modelOptions, generateOptions, pModelName);
+        
     }
 
     public void Update()
     {
-        if (!promptHasRun)
-        {
-            promptHasRun = true;
+        if (_promptHasRun) return;
+        _promptHasRun = true;
 
-            llamaInstance.Query(TestPrompt).Forget();
-        }
+        llamaInstance.Query(pTestPrompt).Forget();
     }
 }
