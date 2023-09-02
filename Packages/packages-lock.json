@@ -142,6 +142,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.whisper.unity": {
+      "version": "https://github.com/Macoron/whisper.unity.git?path=/Packages/com.whisper.unity",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8725359a841c20cfbd1c9fe19db1315a4a84c321"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,
