@@ -33,7 +33,8 @@ public class LlamaCppTest : MonoBehaviour
             TopK = 1,
             TopP = 0.95f,
             Temperature = 0.1f,
-            RepeatPenalty = 1.1f,
+            RepeatPenalty = 1.3f,
+            PenalizeNewLine = true,
             Mirostat = Mirostat.Mirostat2,
             // ...
         };
