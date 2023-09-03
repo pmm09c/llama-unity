@@ -411,15 +411,15 @@ MonoBehaviour:
   pBatchSize: 512
   pUseMemoryMapping: 1
   pUseMemoryLocking: 1
-  pGpuLayers: 24
+  pGpuLayers: 0
   pRopeFrequencyBase: 10000
   pRopeFrequencyScale: 1
   pLowVRAM: 0
-  pThreadCount: 8
+  pThreadCount: 12
   pTopK: 40
   pTopP: 0.95
   pTemperature: 0.8
-  pRepeatPenalty: 1.3
+  pRepeatPenalty: 1.5
   pLastTokenCountPenalty: 64
   pPenalizeNewLine: 1
   pTfsZ: 1
@@ -429,8 +429,8 @@ MonoBehaviour:
   pMirostat: 2
   pMirostatTAU: 5
   pMirostatETA: 0.1
-  pModelName: 13q4.gguf
-  pTestPrompt: Will we get into SAGE 2023?
+  pModelName: Llama2/13q4.gguf
+  pTestPrompt: Make up a song about SAGE
 --- !u!4 &1563233268
 Transform:
   m_ObjectHideFlags: 0

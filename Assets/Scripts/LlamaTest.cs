@@ -36,8 +36,8 @@ public class LlamaCppTest : MonoBehaviour
     [SerializeField] public float pMirostatETA = 0.1f;
     
     // Model Path
-    [SerializeField] public string pModelName = "13q4.gguf";
-    
+    [SerializeField] public string pModelName = "Llama2/13q4.gguf";
+        
     // Prompt
     public string pTestPrompt = "Will we get into SAGE 2023?";
     private static LlamaService llamaInstance;

@@ -120,6 +120,7 @@ namespace DefaultNamespace
             var session = _model.CreateSession();
 
             stopwatch.Start();
+            var tokens = 0;
             await foreach (var token in session.GenerateTokenStringAsync(prompt, _generateOptions, cancellationToken))
             {
                 // Check for cancellation and throw if it's requested
@@ -128,7 +129,8 @@ namespace DefaultNamespace
                     Debug.Log("Cancelled Query");
                     throw new OperationCanceledException(token);  
                 }
-                   
+
+                tokens += 1;
                 Debug.Log(token);
                 _message += token;
                 // TODO find another way to handle this so it doesn't need to switch threads all the time. 
@@ -138,7 +140,9 @@ namespace DefaultNamespace
             }
 
             stopwatch.Stop();
+            var tokenRate = (double)stopwatch.ElapsedMilliseconds/(double)tokens;
             Debug.Log($"session.GenerateTokenStringAsync(...) took {stopwatch.ElapsedMilliseconds} ms to execute.");
+            Debug.Log($"session.GenerateTokenStringAsync(...) token rate {tokenRate} ms per token.");
         }
     }
 
