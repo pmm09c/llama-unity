@@ -4,13 +4,14 @@ using LlamaCppLib;
 using Cysharp.Threading.Tasks;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
+using System.Threading;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 namespace DefaultNamespace
 {
-    
+
     public class LlamaService
     {
         private static LlamaService instance;
@@ -19,14 +20,20 @@ namespace DefaultNamespace
         private LlamaCppModelOptions _modelOptions;
         private string _modelPath;
         private string _message;
-
-        public void LoadModel(in LlamaCppModelOptions modelOptions, in LlamaCppGenerateOptions generateOptions,in string modelPath)
+        
+        public delegate void UpdateTextHandler(string text);
+        public event UpdateTextHandler TextUpdate;
+ 
+        private CancellationTokenSource _cts;
+        
+        public void LoadModel(in LlamaCppModelOptions modelOptions, in LlamaCppGenerateOptions generateOptions,
+            in string modelPath)
         {
             var stopwatch = new Stopwatch();
             _generateOptions = generateOptions;
             _modelOptions = modelOptions;
             _modelPath = Application.streamingAssetsPath + "/" + modelPath;
-            
+
             // Load model file
             _model = new LlamaCppModel();
             stopwatch.Start();
@@ -35,25 +42,26 @@ namespace DefaultNamespace
             Debug.Log($"model.Load(...) took {stopwatch.ElapsedMilliseconds} ms to execute.");
             stopwatch.Reset();
         }
-        
+
         private LlamaService()
         {
-            #if UNITY_EDITOR
-                EditorApplication.playModeStateChanged += LastResults;
-            #endif
+#if UNITY_EDITOR
+            EditorApplication.playModeStateChanged += LastResults;
+#endif
         }
-        
-        #if UNITY_EDITOR
+
+#if UNITY_EDITOR
         private void LastResults(PlayModeStateChange state)
         {
             if (state == PlayModeStateChange.ExitingPlayMode)
             {
                 EditorApplication.playModeStateChanged -= LastResults;
+                CancelQuery().Forget();
                 Debug.Log(_message);
             }
         }
-        #endif
-        
+#endif
+
         public static LlamaService Instance
         {
             get
@@ -62,33 +70,76 @@ namespace DefaultNamespace
                 {
                     instance = new LlamaService();
                 }
+
                 return instance;
             }
         }
 
-        public async UniTask<string> Query(string prompt)
+        public async UniTask CancelQuery()
         {
-            _message = "robot: ";
+            if (_cts != null && _cts.Token.CanBeCanceled)
+            {
+                _cts.Cancel();
+
+                // wait for cancellation to complete
+                while (_cts != null)
+                    await UniTask.Delay(100);
+            }
+            
+        }
+        
+        public async UniTask Query(string prompt)
+        {
+            // Make sure there isn't any active queries
+            await CancelQuery();
+            
+            // Token we can use for cancellation
+            _cts = new CancellationTokenSource();
+
+            try
+            {
+                await UniTask.SwitchToThreadPool();
+                await QueryHelper(prompt, _cts.Token);
+            }
+            // I had a catch block here as well but for some reason the OperationCanceledException isn't getting captured
+            finally
+            {
+                await UniTask.SwitchToMainThread();
+                _cts = null;
+            }
+            
+        }
+
+        private async UniTask QueryHelper(string prompt, CancellationToken cancellationToken)
+        {
+            _message = $"Prompt: {prompt}\n\nMr. Robot:  \n";
+            
             var stopwatch = new Stopwatch();
+            
             // Create conversation session
             var session = _model.CreateSession();
 
-            // Generate tokens
             stopwatch.Start();
-            await foreach (var token in session.GenerateTokenStringAsync(prompt, _generateOptions))
+            await foreach (var token in session.GenerateTokenStringAsync(prompt, _generateOptions, cancellationToken))
             {
+                // Check for cancellation and throw if it's requested
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Debug.Log("Cancelled Query");
+                    throw new OperationCanceledException(token);  
+                }
+                   
                 Debug.Log(token);
                 _message += token;
-                await UniTask.Yield();
+                // TODO find another way to handle this so it doesn't need to switch threads all the time. 
+                await UniTask.SwitchToMainThread();
+                TextUpdate?.Invoke(_message);
+                await UniTask.SwitchToThreadPool(); 
             }
-        
+
             stopwatch.Stop();
             Debug.Log($"session.GenerateTokenStringAsync(...) took {stopwatch.ElapsedMilliseconds} ms to execute.");
-            Debug.Log(_message);
-            return _message;
         }
-        
-      
     }
 
 

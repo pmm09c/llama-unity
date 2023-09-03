@@ -4,6 +4,7 @@ using UnityEngine;
 using DefaultNamespace;
 using Debug = UnityEngine.Debug;
 using LlamaCppLib;
+using UnityEngine.UI;
 
 public class LlamaCppTest : MonoBehaviour
 {
@@ -41,6 +42,7 @@ public class LlamaCppTest : MonoBehaviour
     public string pTestPrompt = "Will we get into SAGE 2023?";
     private static LlamaService llamaInstance;
     private bool _promptHasRun = false;
+    private Text _displayText;
     void Start()
     {
         var modelOptions = new LlamaCppModelOptions 
@@ -76,14 +78,35 @@ public class LlamaCppTest : MonoBehaviour
 
         llamaInstance = LlamaService.Instance;
         llamaInstance.LoadModel(modelOptions, generateOptions, pModelName);
+
+        // For displaying text to screen
+        GameObject canvasGameObject = GameObject.Find("QueryResponseCanvas");
+        _displayText = canvasGameObject.GetComponent<Text>();
+        llamaInstance.TextUpdate += UpdateDisplayText;
         
     }
 
     public void Update()
     {
-        if (_promptHasRun) return;
-        _promptHasRun = true;
+          if (Input.GetKeyDown(KeyCode.Q)) // Restart Query
+              llamaInstance.Query(pTestPrompt).Forget();
+          else if (Input.GetKeyDown(KeyCode.C)) // Cancel Query
+              llamaInstance.CancelQuery().Forget();
+          
+          if (_promptHasRun) return;
+          _promptHasRun = true;
 
-        llamaInstance.Query(pTestPrompt).Forget();
+          llamaInstance.Query(pTestPrompt).Forget();
+    }
+    
+    private void UpdateDisplayText(string text)
+    {
+        _displayText.text = text;
+    }
+
+    private void OnDestroy()
+    {
+        if (llamaInstance != null)
+           llamaInstance.TextUpdate -= UpdateDisplayText;
     }
 }
