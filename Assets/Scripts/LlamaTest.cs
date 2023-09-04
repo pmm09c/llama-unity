@@ -1,10 +1,15 @@
 using System;
+using System.Diagnostics;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DefaultNamespace;
 using Debug = UnityEngine.Debug;
 using LlamaCppLib;
+using TMPro;
 using UnityEngine.UI;
+using Whisper;
+using Whisper.Utils;
+using TMPro; 
 
 public class LlamaCppTest : MonoBehaviour
 {
@@ -41,9 +46,24 @@ public class LlamaCppTest : MonoBehaviour
     // Prompt
     public string pTestPrompt = "Will we get into SAGE 2023?";
     private static LlamaService llamaInstance;
-    private bool _promptHasRun = false;
-    private Text _displayText;
-    void Start()
+    
+    // Whisper Whisper Whisper...
+    public WhisperManager whisper;
+    public MicrophoneRecord microphoneRecord;
+    private string _buffer;
+    public bool streamSegments = true;
+
+    // Display Display Display
+    private TextMeshPro _displayText;
+    private TextMeshProContentSizeFitter _displayFitter;
+
+    private void Awake()
+    {
+        microphoneRecord.OnRecordStop += OnRecordStop;
+        whisper.OnNewSegment += OnNewSegment;
+    }
+
+    async void Start()
     {
         var modelOptions = new LlamaCppModelOptions 
         {
@@ -80,30 +100,67 @@ public class LlamaCppTest : MonoBehaviour
         llamaInstance.LoadModel(modelOptions, generateOptions, pModelName);
 
         // For displaying text to screen
-        GameObject canvasGameObject = GameObject.Find("QueryResponseCanvas");
-        _displayText = canvasGameObject.GetComponent<Text>();
+        GameObject canvasGameObject = GameObject.Find("Transcript");
+        _displayFitter = canvasGameObject.GetComponent<TextMeshProContentSizeFitter>();
+        _displayText = canvasGameObject.GetComponent<TextMeshPro>();
+
         llamaInstance.TextUpdate += UpdateDisplayText;
+        microphoneRecord.vadStop = true;
+    }
+    
+    private void ToggleRecording()
+    {
         
+        if (!microphoneRecord.IsRecording)
+        {
+            microphoneRecord.StartRecord();
+        }
+        else
+            microphoneRecord.StopRecord();
     }
 
+    private void ToggleVad()
+    {
+        microphoneRecord.vadStop =  !microphoneRecord.vadStop;
+    }
+            
+    private void OnNewSegment(WhisperSegment segment)
+    {
+        if (!streamSegments || !_displayText)
+            return;
+
+        _buffer += segment.Text;
+        _displayText.text = _buffer + "...";
+
+    }
+    
+    private async void OnRecordStop(float[] data, int frequency, int channels, float length)
+    {
+        var res = await whisper.GetTextAsync(data, frequency, channels);
+        if (res == null) 
+            return;
+    
+        llamaInstance.Query( res.Result).Forget();
+    }
+    
     public void Update()
     {
           if (Input.GetKeyDown(KeyCode.Q)) // Restart Query
               llamaInstance.Query(pTestPrompt).Forget();
           else if (Input.GetKeyDown(KeyCode.C)) // Cancel Query
               llamaInstance.CancelQuery().Forget();
-          
-          if (_promptHasRun) return;
-          _promptHasRun = true;
-
-          llamaInstance.Query(pTestPrompt).Forget();
+          else if (Input.GetKeyDown(KeyCode.V)) // Toggle  Voice activity detection
+              ToggleVad(); 
+          else if (Input.GetKeyDown(KeyCode.R)) // Toggle Recording
+              ToggleRecording(); 
     }
     
     private void UpdateDisplayText(string text)
     {
         _displayText.text = text;
+        _displayFitter.UpdateRectTransform();
     }
-
+    
     private void OnDestroy()
     {
         if (llamaInstance != null)
