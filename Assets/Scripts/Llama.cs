@@ -104,8 +104,8 @@ namespace DefaultNamespace
             // I had a catch block here as well but for some reason the OperationCanceledException isn't getting captured
             finally
             {
-                await UniTask.SwitchToMainThread();
                 _cts = null;
+                await UniTask.SwitchToMainThread();
             }
             
         }
