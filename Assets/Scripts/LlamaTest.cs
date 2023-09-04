@@ -51,6 +51,8 @@ public class LlamaCppTest : MonoBehaviour
 
     // Display Display Display
     private TextMeshPro _displayText;
+    private TextMeshPro _metricText;
+
     private TextMeshProContentSizeFitter _displayFitter;
 
     // We have a new input system. 
@@ -120,9 +122,12 @@ public class LlamaCppTest : MonoBehaviour
 
         // For displaying text to screen
         GameObject canvasGameObject = GameObject.Find("Transcript");
+        GameObject metricCanvasGameObject = GameObject.Find("Metrics");
+
         _displayFitter = canvasGameObject.GetComponent<TextMeshProContentSizeFitter>();
         _displayText = canvasGameObject.GetComponent<TextMeshPro>();
-
+        _metricText = metricCanvasGameObject.GetComponent<TextMeshPro>();
+        
         llamaInstance.TextUpdate += UpdateDisplayText;
         microphoneRecord.vadStop = true;
     }
@@ -173,10 +178,11 @@ public class LlamaCppTest : MonoBehaviour
           ToggleRecording(); 
     }
     
-    private void UpdateDisplayText(string text)
+    private void UpdateDisplayText(string text, string metrics)
     {
         _displayText.text = text;
         _displayFitter.UpdateRectTransform();
+        _metricText.text = metrics;
     }
 
 

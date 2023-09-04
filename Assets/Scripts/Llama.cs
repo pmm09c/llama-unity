@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using LlamaCppLib;
 using Cysharp.Threading.Tasks;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using Debug = UnityEngine.Debug;
 using System.Threading;
 #if UNITY_EDITOR
@@ -20,10 +23,10 @@ namespace DefaultNamespace
         private LlamaCppModelOptions _modelOptions;
         private string _modelPath;
         private string _message;
-        
-        public delegate void UpdateTextHandler(string text);
+        private string _metricsText;
+        public delegate void UpdateTextHandler(string text, string metrics);
         public event UpdateTextHandler TextUpdate;
- 
+
         private CancellationTokenSource _cts;
         
         public void LoadModel(in LlamaCppModelOptions modelOptions, in LlamaCppGenerateOptions generateOptions,
@@ -110,15 +113,38 @@ namespace DefaultNamespace
             
         }
 
+        private string GetStats(List<double> array)
+        {
+            var mean = Math.Round(array.Average(),1);
+            var min = Math.Round(array.Min(),1);
+            var max = Math.Round(array.Max(),1);
+            var stdDev  = Math.Round(Math.Sqrt(array.Average(v => Math.Pow(v - mean, 2))),1);
+            var sortedRates = array.OrderBy(n => n).ToList();
+            var median  =  array.Count % 2 == 0 ? 
+                Math.Round((sortedRates[(array.Count / 2) - 1] + sortedRates[array.Count / 2]) / 2.0,1): 
+                Math.Round(sortedRates[array.Count / 2],1);
+            
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"CURR:   {array.Last():F1}");
+            sb.AppendLine($"MEAN:   {mean:F1}");
+            sb.AppendLine($"MEDIAN: {median:F1}");
+            sb.AppendLine($"MIN:    {min:F1}");
+            sb.AppendLine($"MAX:    {max:F1}");
+            sb.AppendLine($"STD:    {stdDev:F1}");
+            sb.AppendLine("(in ms/Token)");
+
+            return sb.ToString();
+        }
+        
         private async UniTask QueryHelper(string prompt, CancellationToken cancellationToken)
         {
             _message = $"Prompt: {prompt}\n\nMr. Robot:  \n";
-            
+            List<double> tokenRates = new List<double>();
             var stopwatch = new Stopwatch();
             
             // Create conversation session
             var session = _model.CreateSession();
-
+            double tokenRate = 0;
             stopwatch.Start();
             var tokens = 0;
             await foreach (var token in session.GenerateTokenStringAsync(prompt, _generateOptions, cancellationToken))
@@ -133,14 +159,17 @@ namespace DefaultNamespace
                 tokens += 1;
                 Debug.Log(token);
                 _message += token;
+                tokenRate = (double)stopwatch.ElapsedMilliseconds/(double)tokens;
+                tokenRates.Add(tokenRate);
+                _metricsText = GetStats(tokenRates);
                 // TODO find another way to handle this so it doesn't need to switch threads all the time. 
                 await UniTask.SwitchToMainThread();
-                TextUpdate?.Invoke(_message);
+                TextUpdate?.Invoke(_message, _metricsText);
                 await UniTask.SwitchToThreadPool(); 
+                
             }
 
             stopwatch.Stop();
-            var tokenRate = (double)stopwatch.ElapsedMilliseconds/(double)tokens;
             Debug.Log($"session.GenerateTokenStringAsync(...) took {stopwatch.ElapsedMilliseconds} ms to execute.");
             Debug.Log($"session.GenerateTokenStringAsync(...) token rate {tokenRate} ms per token.");
         }
