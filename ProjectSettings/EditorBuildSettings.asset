@@ -4,7 +4,10 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/SageScene.unity
+    guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 162225eb253b89b44a9a48dd33283a51, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: f5aa3e7dcf3ae6c4887b6f551786face, type: 2}
