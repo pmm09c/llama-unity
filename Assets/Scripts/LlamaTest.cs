@@ -1,17 +1,13 @@
-using System;
-using System.Diagnostics;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DefaultNamespace;
-using Debug = UnityEngine.Debug;
 using LlamaCppLib;
 using TMPro;
-using UnityEngine.UI;
 using Whisper;
 using Whisper.Utils;
-using TMPro; 
-
+using UnityEngine.InputSystem;
 public class LlamaCppTest : MonoBehaviour
+
 {
     // Model Options
     [SerializeField] public uint pSeed  = uint.MaxValue;
@@ -57,11 +53,34 @@ public class LlamaCppTest : MonoBehaviour
     private TextMeshPro _displayText;
     private TextMeshProContentSizeFitter _displayFitter;
 
+    // We have a new input system. 
+    public InputAction cancelQuery;
+    public InputAction submitQuery;
+    public InputAction toggleRecording;
+    public InputAction toggleVAD;
+
     private void Awake()
     {
         microphoneRecord.OnRecordStop += OnRecordStop;
         whisper.OnNewSegment += OnNewSegment;
     }
+    
+    private void OnEnable()
+    {
+        cancelQuery.Enable();
+        submitQuery.Enable();
+        toggleRecording.Enable();
+        toggleVAD.Enable();
+    }
+
+    private void OnDisable()
+    {
+        cancelQuery.Disable();
+        submitQuery.Disable();
+        toggleRecording.Disable();
+        toggleVAD.Disable();
+    }
+
 
     async void Start()
     {
@@ -142,17 +161,16 @@ public class LlamaCppTest : MonoBehaviour
     
         llamaInstance.Query( res.Result).Forget();
     }
-    
     public void Update()
     {
-          if (Input.GetKeyDown(KeyCode.Q)) // Restart Query
-              llamaInstance.Query(pTestPrompt).Forget();
-          else if (Input.GetKeyDown(KeyCode.C)) // Cancel Query
-              llamaInstance.CancelQuery().Forget();
-          else if (Input.GetKeyDown(KeyCode.V)) // Toggle  Voice activity detection
-              ToggleVad(); 
-          else if (Input.GetKeyDown(KeyCode.R)) // Toggle Recording
-              ToggleRecording(); 
+        if (submitQuery.triggered) // Submit/Resubmit Query
+          llamaInstance.Query(pTestPrompt).Forget();
+        else if (cancelQuery.triggered) // Cancel Query
+          llamaInstance.CancelQuery().Forget();
+        else if (toggleVAD.triggered) // Toggle  Voice activity detection
+          ToggleVad(); 
+        else if (toggleRecording.triggered) // Toggle Recording
+          ToggleRecording(); 
     }
     
     private void UpdateDisplayText(string text)
@@ -160,9 +178,11 @@ public class LlamaCppTest : MonoBehaviour
         _displayText.text = text;
         _displayFitter.UpdateRectTransform();
     }
-    
+
+
     private void OnDestroy()
     {
+  
         if (llamaInstance != null)
            llamaInstance.TextUpdate -= UpdateDisplayText;
     }
