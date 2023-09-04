@@ -149,6 +149,7 @@ namespace DefaultNamespace
             var tokens = 0;
             await foreach (var token in session.GenerateTokenStringAsync(prompt, _generateOptions, cancellationToken))
             {
+                stopwatch.Stop();
                 // Check for cancellation and throw if it's requested
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -159,18 +160,17 @@ namespace DefaultNamespace
                 tokens += 1;
                 Debug.Log(token);
                 _message += token;
-                tokenRate = (double)stopwatch.ElapsedMilliseconds/(double)tokens;
+                tokenRate = (double)stopwatch.ElapsedMilliseconds;//;/(double)tokens;
                 tokenRates.Add(tokenRate);
                 _metricsText = GetStats(tokenRates);
                 // TODO find another way to handle this so it doesn't need to switch threads all the time. 
                 await UniTask.SwitchToMainThread();
                 TextUpdate?.Invoke(_message, _metricsText);
                 await UniTask.SwitchToThreadPool(); 
-                
+                stopwatch.Reset();
+                stopwatch.Start();
             }
-
-            stopwatch.Stop();
-            Debug.Log($"session.GenerateTokenStringAsync(...) took {stopwatch.ElapsedMilliseconds} ms to execute.");
+            //Debug.Log($"session.GenerateTokenStringAsync(...) took {stopwatch.ElapsedMilliseconds} ms to execute.");
             Debug.Log($"session.GenerateTokenStringAsync(...) token rate {tokenRate} ms per token.");
         }
     }
