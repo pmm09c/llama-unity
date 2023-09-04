@@ -115,14 +115,15 @@ namespace DefaultNamespace
 
         private string GetStats(List<double> array)
         {
-            var mean = Math.Round(array.Average(),1);
-            var min = Math.Round(array.Min(),1);
-            var max = Math.Round(array.Max(),1);
-            var stdDev  = Math.Round(Math.Sqrt(array.Average(v => Math.Pow(v - mean, 2))),1);
-            var sortedRates = array.OrderBy(n => n).ToList();
-            var median  =  array.Count % 2 == 0 ? 
-                Math.Round((sortedRates[(array.Count / 2) - 1] + sortedRates[array.Count / 2]) / 2.0,1): 
-                Math.Round(sortedRates[array.Count / 2],1);
+            List<double> subArray = array.Skip(1).ToList();
+            var mean = Math.Round(subArray.Average(),1);
+            var min = Math.Round(subArray.Min(),1);
+            var max = Math.Round(subArray.Max(),1);
+            var stdDev  = Math.Round(Math.Sqrt(subArray.Average(v => Math.Pow(v - mean, 2))),1);
+            var sortedRates = subArray.OrderBy(n => n).ToList();
+            var median  =  subArray.Count % 2 == 0 ? 
+                Math.Round((sortedRates[(subArray.Count / 2) - 1] + sortedRates[subArray.Count / 2]) / 2.0,1): 
+                Math.Round(sortedRates[subArray.Count / 2],1);
             
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"CURR:   {array.Last():F1}");
@@ -131,6 +132,7 @@ namespace DefaultNamespace
             sb.AppendLine($"MIN:    {min:F1}");
             sb.AppendLine($"MAX:    {max:F1}");
             sb.AppendLine($"STD:    {stdDev:F1}");
+            sb.AppendLine($"FIRST:    {array[0]:F1}");
             sb.AppendLine("(in ms/Token)");
 
             return sb.ToString();
@@ -162,7 +164,8 @@ namespace DefaultNamespace
                 _message += token;
                 tokenRate = (double)stopwatch.ElapsedMilliseconds;//;/(double)tokens;
                 tokenRates.Add(tokenRate);
-                _metricsText = GetStats(tokenRates);
+                if (tokens > 1)
+                    _metricsText = GetStats(tokenRates);
                 // TODO find another way to handle this so it doesn't need to switch threads all the time. 
                 await UniTask.SwitchToMainThread();
                 TextUpdate?.Invoke(_message, _metricsText);
