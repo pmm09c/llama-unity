@@ -18,7 +18,7 @@ public class CustomBuildPostProcessor : IPostprocessBuildWithReport
         switch (report.summary.platform)
         {
             case BuildTarget.Android:
-                OnAndroidPostprocessBuild(report.summary.outputPath);
+                //OnAndroidPostprocessBuild(report.summary.outputPath);
                 break;
 
             case BuildTarget.StandaloneWindows64:

@@ -1,3 +1,4 @@
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DefaultNamespace;
@@ -131,15 +132,33 @@ public class LlamaCppTest : MonoBehaviour
         llamaInstance.TextUpdate += UpdateDisplayText;
         microphoneRecord.vadStop = true;
     }
+
+    private void DebugMics()
+    {
+        Debug.Log("List of Microphones \n");
+        foreach(var mic in microphoneRecord.AvailableMicDevices )
+        {
+            Debug.Log(mic);
+        }
+        Debug.Log("\n\nSelected Mic \n");
+        Debug.Log(microphoneRecord.SelectedMicDevice);
+    }
     
     private void ToggleRecording()
     {
-        
+            
         if (!microphoneRecord.IsRecording)
         {
+            #if UNITY_ANDROID
+                        microphoneRecord.SelectedMicDevice = "Android audio input";
+            #endif
+            Debug.Log("Starting to Record");
+            //DebugMics();
             microphoneRecord.StartRecord();
         }
         else
+            Debug.Log("Stopping recording to Record");
+            Debug.Log(_buffer);
             microphoneRecord.StopRecord();
     }
 

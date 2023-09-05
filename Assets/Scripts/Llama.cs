@@ -35,8 +35,11 @@ namespace DefaultNamespace
             var stopwatch = new Stopwatch();
             _generateOptions = generateOptions;
             _modelOptions = modelOptions;
-            _modelPath = Application.streamingAssetsPath + "/" + modelPath;
-
+            #if UNITY_ANDROID
+                _modelPath = "/storage/emulated/0/Models/" + modelPath;
+            #else
+                _modelPath = Application.streamingAssetsPath + "/" + modelPath;
+            #endif
             // Load model file
             _model = new LlamaCppModel();
             stopwatch.Start();

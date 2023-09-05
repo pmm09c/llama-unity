@@ -9,6 +9,8 @@ EditorBuildSettings:
     path: Assets/Scenes/SageScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects:
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: c4a6c36c0ccec4e45ae1710269fce57e, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: 162225eb253b89b44a9a48dd33283a51, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: f5aa3e7dcf3ae6c4887b6f551786face, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 059f665ca9694fc438ca2d4bc21f6f55, type: 2}
+    xr.sdk.mock-hmd.settings: {fileID: 11400000, guid: 4f053b45d2a3dc34da9ec31d57b7fd6b, type: 2}
