@@ -7,6 +7,8 @@ using TMPro;
 using Whisper;
 using Whisper.Utils;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
+
 public class LlamaCppTest : MonoBehaviour
 
 {
@@ -37,6 +39,9 @@ public class LlamaCppTest : MonoBehaviour
     [SerializeField] public float pMirostatTAU = 5f;
     [SerializeField] public float pMirostatETA = 0.1f;
     
+    // Benchmark
+    [SerializeField] public bool doBenchmark = false;
+    
     // Model Path
     [SerializeField] public string pModelName = "Llama2/13q4.gguf";
         
@@ -61,7 +66,7 @@ public class LlamaCppTest : MonoBehaviour
     public InputAction submitQuery;
     public InputAction toggleRecording;
     public InputAction toggleVAD;
-
+    
     private void Awake()
     {
         microphoneRecord.OnRecordStop += OnRecordStop;
@@ -187,6 +192,12 @@ public class LlamaCppTest : MonoBehaviour
     }
     public void Update()
     {
+        if (doBenchmark)
+        {
+            string testQuery = "What is a large language model?";
+            var uniTask = llamaInstance.Query(testQuery);
+            doBenchmark = false;
+        }
         if (submitQuery.triggered) // Submit/Resubmit Query
           llamaInstance.Query(pTestPrompt).Forget();
         else if (cancelQuery.triggered) // Cancel Query
